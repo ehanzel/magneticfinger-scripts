@@ -8,28 +8,33 @@ Custom code for the Magnetic Finger Webflow site (magneticfinger.com). Webflow l
 
 | File | What it does | Where it runs |
 |---|---|---|
+| `loader.js` | The only script registered in Webflow (as "MFAsyncLoader"). Loads the chatbot and free-shipping popup **async** from jsDelivr, pinned to a commit, with integrity hashes, so they never slow down the page or the store. | Every page |
 | `chatbot/chatbot.js` | "Need a hand?" chat helper (product picker, sizing, shipping, wholesale/private label) | Every page |
 | `popups/free-shipping-popup.js` | "Want free shipping?" prompt when the cart is under $50 and has no multipack | Every page (cart) |
 | `popups/checkout-shipping-note.js` | Free-shipping note under the discount box on checkout | Checkout page |
 | `custom-code/site-head.html` | Copy of the site-wide **Head** custom code box (GTM, Meta Pixel, etc.). Reference/backup only. | — |
 | `custom-code/site-footer.html` | Copy of the site-wide **Footer** custom code box. Reference/backup only. | — |
 
-## How the site loads a file
+## How the site loads files
 
-Each script is added in Webflow as a *hosted script* pointing at a jsDelivr URL pinned to a release tag:
+Webflow runs `loader.js`, which adds the other files from jsDelivr, pinned to an exact commit:
 
 ```
-https://cdn.jsdelivr.net/gh/<owner>/magneticfinger-scripts@v1.3.0/chatbot/chatbot.js
+https://cdn.jsdelivr.net/gh/ehanzel/magneticfinger-scripts@<commit>/chatbot/chatbot.js
 ```
+
+Each file also has a `sha384` integrity hash in the loader; if the file doesn't match, the browser refuses to run it.
 
 ## Making a change
 
-1. Edit the file and commit.
-2. Create a new tag/release (e.g. `v1.3.1`).
-3. Point the **test** site at the new tag, publish, and check it.
-4. Point the **live** site at the same tag and publish.
+1. Edit the file and commit/push.
+2. Update `loader.js` with the new commit ID and the file's new integrity hash.
+3. Register the new loader version in Webflow, publish to staging (magneticfinger.webflow.io) and check it.
+4. Publish to the live domains.
 
-Because each site is pinned to a tag, editing the repo never changes the live site until you update the tag in Webflow.
+Because the site is pinned to a commit, editing the repo never changes the live site until the loader is updated in Webflow.
+
+`checkout-shipping-note.js` is a copy for reference; it is still registered directly in Webflow.
 
 ## Version history
 
