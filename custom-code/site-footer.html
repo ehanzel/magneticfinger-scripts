@@ -1,0 +1,471 @@
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TJJZD94L"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+<script src="https://js.usebasin.com/v2.3.0.min.js" async></script>
+
+<script>
+(function() {
+  // Logging function
+  function log(message, type = 'info') {
+    const types = {
+      info: 'color: #0077be;',
+      warn: 'color: #ff9800;',
+      error: 'color: #f44336;'
+    };
+    console.log(`%c[Form Processor] ${message}`, types[type]);
+  }
+
+  // Safe query selector
+  function safeQuerySelector(parent, selector) {
+    try {
+      return parent.querySelector(selector);
+    } catch (error) {
+      log(`Error querying for ${selector}: ${error.message}`, 'error');
+      return null;
+    }
+  }
+
+  // Safe event listener addition
+  function safeAddEventListener(element, event, handler) {
+    if (element && typeof element.addEventListener === 'function') {
+      element.addEventListener(event, handler);
+    } else {
+      log(`Unable to add event listener for ${event}`, 'warn');
+    }
+  }
+
+  // Process checkbox groups
+  function processCheckboxGroups(form) {
+    const checkboxGroups = form.querySelectorAll('.checkbox-group-wrapper');
+    checkboxGroups.forEach((group, groupIndex) => {
+      const fieldName = group.getAttribute('data-field-name');
+      if (!fieldName) {
+        log(`data-field-name attribute missing on checkbox group ${groupIndex + 1}`, 'error');
+        return;
+      }
+
+      const checkboxes = group.querySelectorAll('input[type="checkbox"]');
+      if (checkboxes.length === 0) {
+        log(`No checkboxes found in group ${groupIndex + 1}`, 'warn');
+        return;
+      }
+
+      let hiddenField = safeQuerySelector(form, `input[name="${fieldName}"]`);
+      if (!hiddenField) {
+        hiddenField = document.createElement('input');
+        hiddenField.type = 'hidden';
+        hiddenField.name = fieldName.replace(/-/g, ' ');
+        group.parentNode.insertBefore(hiddenField, group.nextSibling);
+      }
+
+      function updateHiddenField() {
+        const selectedItems = Array.from(checkboxes)
+          .filter(checkbox => checkbox.checked)
+          .map(checkbox => checkbox.getAttribute('data-name') || checkbox.value);
+        hiddenField.value = selectedItems.join('\n');
+      }
+
+      checkboxes.forEach(checkbox => {
+        safeAddEventListener(checkbox, 'change', updateHiddenField);
+        checkbox.removeAttribute('name');
+      });
+
+      updateHiddenField();
+      log(`Processed checkbox group: ${fieldName}`);
+    });
+  }
+
+  // Phone number formatting and validation
+  function setupPhoneFormatting(form) {
+    const phoneInputs = form.querySelectorAll('.is-phonenumber');
+    if (phoneInputs.length === 0) {
+      log('No phone number fields found', 'warn');
+      return;
+    }
+
+    phoneInputs.forEach(phoneInput => {
+      phoneInput.pattern = "\\([0-9]{3}\\) [0-9]{3}-[0-9]{4}";
+      
+      let previousValue = '';
+      
+      safeAddEventListener(phoneInput, 'input', function(e) {
+        let digits = phoneInput.value.replace(/\D/g, '');
+        digits = digits.slice(0, 10);
+        
+        if (digits.length > 0) {
+          let formattedNumber = '';
+          if (digits.length >= 3) {
+            formattedNumber += `(${digits.slice(0, 3)})`;
+            if (digits.length >= 6) {
+              formattedNumber += ` ${digits.slice(3, 6)}-${digits.slice(6)}`;
+            } else if (digits.length > 3) {
+              formattedNumber += ` ${digits.slice(3)}`;
+            }
+          } else {
+            formattedNumber = digits;
+          }
+          phoneInput.value = formattedNumber;
+        }
+        
+        previousValue = phoneInput.value;
+      });
+
+      safeAddEventListener(phoneInput, 'blur', function() {
+        const digits = phoneInput.value.replace(/\D/g, '');
+        if (digits.length > 0 && digits.length !== 10) {
+          phoneInput.setCustomValidity('Please enter a 10-digit phone number');
+        } else {
+          phoneInput.setCustomValidity('');
+        }
+      });
+
+      log(`Phone formatting initialized for field: ${phoneInput.name || phoneInput.id}`);
+    });
+  }
+
+  // Updated address handling
+  function setupAddressHandling(form) {
+    const streetAddressField = form.querySelector('.is-street-address');
+    const cityField = form.querySelector('.is-city');
+    const stateField = form.querySelector('.is-state');
+    const zipField = form.querySelector('.is-zipcode');
+    const fullAddressField = form.querySelector('input.is-full-address');
+
+    if (!fullAddressField) {
+        log('Full address field not found, skipping address handling', 'info');
+        return;
+    }
+
+    const individualFields = [streetAddressField, cityField, stateField, zipField];
+    
+    if (zipField) {
+        safeAddEventListener(zipField, 'input', (event) => {
+            event.target.value = event.target.value.replace(/[^0-9]/g, '').slice(0, 5);
+        });
+    }
+
+    function combineAddress() {
+        const addressParts = [];
+        
+        if (streetAddressField?.value.trim()) {
+            addressParts.push(streetAddressField.value.trim());
+        }
+        
+        let locationPart = '';
+        
+        if (cityField?.value.trim()) {
+            locationPart += cityField.value.trim();
+        }
+        
+        if (stateField?.value.trim()) {
+            if (locationPart) {
+                locationPart += ', ';
+            }
+            locationPart += stateField.value.trim();
+        }
+        
+        if (zipField?.value.trim()) {
+            if (locationPart) {
+                locationPart += ' ';
+            }
+            locationPart += zipField.value.trim();
+        }
+        
+        if (locationPart) {
+            addressParts.push(locationPart);
+        }
+
+        const fullAddress = addressParts.join(', ').trim();
+        fullAddressField.value = fullAddress;
+        
+        log(`Constructed address: ${fullAddress}`);
+    }
+
+    function prepareAddressFieldsForSubmission() {
+        individualFields.forEach(field => {
+            if (field) {
+                field.disabled = true;
+                field.removeAttribute('name');
+                log(`Prepared address field for submission: ${field.id || 'unnamed field'}`);
+            }
+        });
+    }
+
+    individualFields.forEach(field => {
+        if (field) {
+            safeAddEventListener(field, 'input', combineAddress);
+            safeAddEventListener(field, 'change', combineAddress);
+        }
+    });
+
+    return { 
+        combineAddress,
+        prepareAddressFieldsForSubmission 
+    };
+  }
+
+  // Handle blank fields
+  function handleBlankFields(form) {
+    Array.from(form.elements).forEach((element) => {
+      if (element.type !== 'submit' && element.type !== 'hidden' && !element.disabled) {
+        if (element.type === 'checkbox' || element.type === 'radio') {
+          if (!element.checked) {
+            element.disabled = true;
+          }
+        } else {
+          const value = element.value.trim();
+          if (value === '') {
+            element.disabled = true;
+            log(`Removing blank field from submission: ${element.name || element.id}`, 'info');
+          } else if (value === '0' || value === 'null' || value === 'undefined') {
+            element.disabled = true;
+            log(`Removing default/placeholder value from submission: ${element.name || element.id}`, 'info');
+          }
+        }
+      }
+    });
+  }
+
+  // Main initialization function for Basin forms only
+  function initBasinForm(form) {
+    try {
+      log(`Initializing Basin form processing`);
+      
+      // Clean up field names
+      Array.from(form.elements).forEach(element => {
+        if (element.name && !element.name.startsWith('checkbox-group-')) {
+          const cleanedName = element.name.replace(/-/g, ' ');
+          element.name = cleanedName;
+          log(`Updated name for field: ${cleanedName}`);
+        }
+      });
+
+      processCheckboxGroups(form);
+      setupPhoneFormatting(form);
+      const addressHandling = setupAddressHandling(form);
+
+      // Handle form submission without interfering with BasinJS
+      const originalSubmit = form.submit;
+      form.onsubmit = function(event) {
+        // Handle address combination first
+        if (addressHandling) {
+          addressHandling.combineAddress();
+          // Now prepare address fields for submission
+          addressHandling.prepareAddressFieldsForSubmission();
+        }
+
+        // Remove blank fields
+        handleBlankFields(form);
+
+        // Let BasinJS handle the actual submission
+        return true;
+      };
+
+      log('Basin form processing initialized successfully.');
+    } catch (error) {
+      log(`Error initializing Basin form: ${error.message}`, 'error');
+    }
+  }
+
+  // Initialize all Basin forms
+  function initAllBasinForms() {
+    const forms = document.querySelectorAll('form[data-basin-form]');
+    
+    if (forms.length === 0) {
+      log('No Basin forms (with data-basin-form attribute) found on the page.', 'info');
+      return;
+    }
+
+    log(`Found ${forms.length} Basin form(s) on the page.`);
+    forms.forEach((form, index) => {
+      log(`Initializing Basin form ${index + 1}`);
+      initBasinForm(form);
+    });
+  }
+
+  // Run initialization when the DOM is fully loaded
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAllBasinForms);
+  } else {
+    initAllBasinForms();
+  }
+})();
+</script>
+
+<script>
+// Execute when DOM is fully loaded to ensure all elements are available
+document.addEventListener('DOMContentLoaded', function() {
+  // Only select forms with data-basin-form attribute
+  const basinForms = document.querySelectorAll('form[data-basin-form]');
+  
+  basinForms.forEach(form => {
+    const submitButton = form.querySelector('input[type="submit"], button[type="submit"]');
+    
+    if (submitButton) {
+      // Add our submit handler before BasinJS processes the form
+      form.addEventListener('submit', function(e) {
+        // Prevent multiple submissions
+        if (submitButton.disabled || form.classList.contains('is-submitting')) {
+          e.preventDefault();
+          return false;
+        }
+        
+        // Immediately disable the button
+        submitButton.disabled = true;
+        
+        // Store original button text
+        if (submitButton.innerText) {
+          submitButton.setAttribute('data-original-text', submitButton.innerText);
+          submitButton.innerText = 'Submitting...';
+        } else if (submitButton.value) {
+          submitButton.setAttribute('data-original-value', submitButton.value);
+          submitButton.value = 'Submitting...';
+        }
+        
+        // Add submitting classes
+        submitButton.classList.add('is-submitting');
+        form.classList.add('is-submitting');
+        
+        // Create and show loading indicator
+        showLoadingIndicator(form);
+        
+        // Log to console
+        console.log('Basin form submit initiated:', form);
+        
+        // Continue with normal submission - BasinJS will handle it from here
+        return true;
+      }, true); // Use capture phase to ensure our code runs first
+    }
+  });
+  
+  // Function to create and display loading spinner
+  function showLoadingIndicator(form) {
+    // Create loading indicator if it doesn't exist
+    if (!form.querySelector('.form-loading-indicator')) {
+      const loadingIndicator = document.createElement('div');
+      loadingIndicator.className = 'form-loading-indicator';
+      loadingIndicator.innerHTML = '<div class="loading-spinner"></div><p>Submitting form...</p>';
+      loadingIndicator.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100;';
+      
+      // Add spinner styles if not already added
+      if (!document.getElementById('spinner-style')) {
+        const spinnerStyle = document.createElement('style');
+        spinnerStyle.id = 'spinner-style';
+        spinnerStyle.textContent = `
+          .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 10px;
+          }
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `;
+        document.head.appendChild(spinnerStyle);
+      }
+      
+      // Make sure form has position relative for absolute positioning
+      const formPosition = window.getComputedStyle(form).position;
+      if (formPosition === 'static') {
+        form.style.position = 'relative';
+      }
+      
+      form.appendChild(loadingIndicator);
+    }
+  }
+});
+
+// Keep the BasinJS event listeners for tracking purposes
+document.addEventListener('basinjsFormSubmitted', function(event) {
+  // Push to GTM dataLayer
+  window.dataLayer = window.dataLayer || [];
+  window.dataLayer.push({
+    event: 'basinjsFormSubmitted',
+    formId: event.detail.form.id,
+    formName: event.detail.form.getAttribute('data-name'),
+  });
+});
+
+document.addEventListener('basinjsFormSuccess', function(event) {
+  console.log('Form submission succeeded:', event.detail.form);
+  
+  // Push success event to GTM dataLayer
+  window.dataLayer = window.dataLayer || [];
+  window.dataLayer.push({
+    event: 'basinjsFormSuccess',
+    formId: event.detail.form.id,
+    formName: event.detail.form.getAttribute('data-name'),
+  });
+  
+  // Note: Webflow/BasinJS handles the success UI
+});
+
+document.addEventListener('basinjsFormError', function(event) {
+  const form = event.detail.form;
+  
+  // Only handle error UI for Basin forms
+  const isBasinForm = form.hasAttribute('data-basin-form');
+  if (!isBasinForm) {
+    return;
+  }
+  
+  const submitButton = form.querySelector('input[type="submit"], button[type="submit"]');
+  const loadingIndicator = form.querySelector('.form-loading-indicator');
+  
+  // Remove loading indicator
+  if (loadingIndicator) {
+    loadingIndicator.remove();
+  }
+  
+  // Re-enable submit button on error
+  if (submitButton) {
+    submitButton.disabled = false;
+    submitButton.classList.remove('is-submitting');
+    
+    // Restore original button text
+    if (submitButton.hasAttribute('data-original-text')) {
+      submitButton.innerText = submitButton.getAttribute('data-original-text');
+    } else if (submitButton.hasAttribute('data-original-value')) {
+      submitButton.value = submitButton.getAttribute('data-original-value');
+    }
+  }
+  
+  // Remove submitting class from form
+  form.classList.remove('is-submitting');
+  
+  console.error('Basin form submission error:', event.detail.error);
+  
+  // Push error event to GTM dataLayer
+  window.dataLayer = window.dataLayer || [];
+  window.dataLayer.push({
+    event: 'basinjsFormError',
+    formId: event.detail.form.id,
+    formName: event.detail.form.getAttribute('data-name'),
+    error: event.detail.error,
+  });
+});
+</script>
+<script>
+(function () {
+  const params = new URLSearchParams(window.location.search);
+
+  const source = params.get('utm_source');
+  const medium = params.get('utm_medium');
+  const campaign = params.get('utm_campaign');
+  const content = params.get('utm_content');
+
+  if (source && !localStorage.getItem('marketing_source')) {
+    localStorage.setItem('marketing_source', source);
+    localStorage.setItem('marketing_medium', medium || '');
+    localStorage.setItem('marketing_campaign', campaign || '');
+    localStorage.setItem('marketing_content', content || '');
+  }
+})();
+</script>

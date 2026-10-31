@@ -1,0 +1,228 @@
+<script>
+/* Block Meta's automatic AddToCart/InitiateCheckout duplicates (they have no price).
+   Webflow's proper events, which include the price, still go through. */
+(function(){
+  var d = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
+  if (!d || !d.set) return;
+  Object.defineProperty(HTMLImageElement.prototype, 'src', {
+    configurable: true,
+    get: function(){ return d.get.call(this); },
+    set: function(v){
+      try {
+        var s = String(v);
+        if (s.indexOf('facebook.com/tr') > -1 &&
+            /[?&]ev=(AddToCart|InitiateCheckout)(&|$)/.test(s) &&
+            !/cd(%5B|\[)value(%5D|\])=/.test(s)) return;
+      } catch (e) {}
+      d.set.call(this, v);
+    }
+  });
+})();
+</script>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-TJJZD94L');</script>
+<!-- End Google Tag Manager -->
+
+<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('set', 'autoConfig', false, '1549041722810837');
+fbq('init', '1549041722810837');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=1549041722810837&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+
+
+<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('set', 'autoConfig', false, '1379507886402844');
+fbq('init', '1379507886402844');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=1379507886402844&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+
+<!-- Roku Pixel Code -->
+<script>
+!function(e,r){if(!e.rkp){var t=e.rkp=function(){
+var e=Array.prototype.slice.call(arguments)
+;e.push(Date.now()),t.eventProcessor?t.eventProcessor.apply(t,e):t.queue.push(e)
+};t.initiatorVersion="1.0",t.queue=[],t.load=function(e){
+var t=r.createElement("script");t.async=!0,t.src=e
+;var n=r.getElementsByTagName("script")[0]
+;(n?n.parentNode:r.body).insertBefore(t,n)},rkp.load("https://cdn.ravm.tv/ust/dist/rkp.loader.js")}
+}(window,document);
+rkp("init","PacccL24wFsh"),rkp('event', 'PAGE_VIEW');;
+</script>
+<!-- End Roku Pixel Code -->
+
+
+<style>
+  
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -o-font-smoothing: antialiased;
+  }
+
+.is-open {
+  height: 100dvh;
+  width: 100%;
+  max-width: 100vw;
+  position: fixed;
+}
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    text-wrap: balance;
+  }
+
+  p,
+  li {
+    text-wrap: pretty;
+  }
+
+  textarea {
+    resize: vertical;
+  }
+
+  .w-lightbox-backdrop {
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+  }
+
+  .w-lightbox-item {
+    opacity: 0.3;
+  }
+
+  .w-lightbox-item.w-lightbox-active {
+    opacity: 1;
+  }
+
+  .w-lightbox-strip .w-lightbox-item.w-lightbox-active {
+    opacity: 1;
+  }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  try {
+    const myButton = document.getElementById('daburger');
+    const myDiv = document.querySelector('.page-wrapper');
+    const html = document.documentElement;
+    let isMenuOpen = false;
+    
+    if (!myButton) {
+      throw new Error("Element with id 'daburger' not found");
+    }
+    if (!myDiv) {
+      throw new Error("Element with class 'page-wrapper' not found");
+    }
+
+    // Store the scroll position when menu opens
+    let scrollPosition = 0;
+
+    // Handle menu toggle
+    function toggleMenu() {
+      isMenuOpen = !isMenuOpen;
+      
+      if (isMenuOpen) {
+        // Store current scroll position before locking
+        scrollPosition = window.pageYOffset;
+        // Add menu open class
+        myDiv.classList.add('is-open');
+        // Lock the body
+        html.style.position = 'fixed';
+        html.style.top = `-${scrollPosition}px`;
+        html.style.width = '100%';
+      } else {
+        // Remove menu open class
+        myDiv.classList.remove('is-open');
+        // Unlock the body and restore scroll position
+        html.style.position = '';
+        html.style.top = '';
+        html.style.width = '';
+        window.scrollTo(0, scrollPosition);
+      }
+    }
+
+    // Handle all menu links
+    document.addEventListener('click', function(e) {
+      const anchor = e.target.closest('a');
+      if (!anchor || !isMenuOpen) return;
+
+      const href = anchor.getAttribute('href');
+      
+      // For pure anchor links, just remove the class and let Webflow handle the navigation
+      if (href.startsWith('#')) {
+        myDiv.classList.remove('is-open');
+        html.style.position = '';
+        html.style.top = '';
+        html.style.width = '';
+        window.scrollTo(0, scrollPosition);
+        isMenuOpen = false;
+        return;
+      }
+      
+      const currentPath = window.location.pathname;
+      
+      // Check if this is a relative link with anchor within the current page
+      if (
+        (href.includes('#') && href.split('#')[0] === currentPath) || // Current path + anchor
+        (currentPath.endsWith(href.split('#')[0])) // Relative path + anchor matching current page
+      ) {
+        e.preventDefault();
+        const targetId = href.split('#')[1];
+        const targetElement = document.getElementById(targetId);
+        
+        if (targetElement) {
+          // Close menu by triggering click on burger menu
+          myButton.click();
+          
+          // Wait for menu close animation to complete
+          setTimeout(() => {
+            targetElement.scrollIntoView({
+              behavior: 'smooth'
+            });
+          }, 300); // Adjust timeout to match your menu close animation duration
+        }
+      }
+    });
+
+    // Add click event listener to burger menu
+    myButton.addEventListener('click', toggleMenu);
+    
+    console.log("Event listeners added successfully");
+  } catch (error) {
+    console.error("An error occurred:", error.message);
+  }
+});
+</script>
