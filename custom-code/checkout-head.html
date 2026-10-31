@@ -1,0 +1,8 @@
+<!-- Checkout loading state: hides Webflow's $0.00 placeholder until the real total arrives (max 8s). -->
+<style>
+html.mfck-wait .w-commerce-commercecheckoutblockcontent:has(.w-commerce-commercecheckoutsummarytotal){position:relative}
+html.mfck-wait .w-commerce-commercecheckoutblockcontent:has(.w-commerce-commercecheckoutsummarytotal)>*{visibility:hidden}
+html.mfck-wait .w-commerce-commercecheckoutblockcontent:has(.w-commerce-commercecheckoutsummarytotal)::after{content:"Calculating your total\2026";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#666;font-size:14px;animation:mfck 1.2s ease-in-out infinite}
+@keyframes mfck{50%{opacity:.4}}
+</style>
+<script>(function(){var h=document.documentElement,s=Date.now();h.classList.add("mfck-wait");function c(){var t=document.querySelector(".w-commerce-commercecheckoutsummarytotal"),n=t?parseFloat(t.textContent.replace(/[^0-9.]/g,"")):0;if(n>0||Date.now()-s>8000){h.classList.remove("mfck-wait");return}setTimeout(c,100)}c()})();</script>
