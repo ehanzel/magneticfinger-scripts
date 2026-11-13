@@ -36,9 +36,10 @@ Each file also has a `sha384` integrity hash in the loader; if the file doesn't 
 
 Because the site is pinned to a commit, editing the repo never changes the live site until the loader is updated in Webflow.
 
-`checkout-shipping-note.js` is a copy for reference; it is still registered directly in Webflow.
+`checkout-shipping-note.js` is registered in Webflow as a hosted script ("CheckoutShippingNote" 1.1.0) on the Checkout page, loaded from jsDelivr pinned to a commit with an integrity hash.
 
 ## Version history
 
+- **Loader 1.2.0 / Checkout note 1.1.0** (Nov 13): Canada shipping. Checkout note shows US or Canada terms by shipping country, blocks code Multiplus for Canadian addresses and holds Place Order if it was applied before switching to Canada. Free-shipping popup says "US orders of $50+ (Canada: free at $60+)". Pinned to commit 6f6d73a.
 - **v1.3.0**: Chatbot v1.3 (size calculator, private label flow). Free-shipping popup v1.0.4, checkout note v1.0.3.
 - **Loader 1.1.0** (Oct 31): loads chatbot, free-shipping popup and cart reminder async, pinned to commit 7850a0e.
